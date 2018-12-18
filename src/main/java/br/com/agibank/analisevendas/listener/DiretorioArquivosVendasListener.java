@@ -1,5 +1,8 @@
 package br.com.agibank.analisevendas.listener;
 
+import br.com.agibank.analisevendas.model.ArquivoVendas;
+import br.com.agibank.analisevendas.service.GerarRelatorioService;
+import br.com.agibank.analisevendas.service.IGerarRelatorioService;
 import br.com.agibank.analisevendas.service.ILeituraArquivoService;
 import br.com.agibank.analisevendas.service.LeituraArquivoService;
 
@@ -9,13 +12,13 @@ import java.nio.file.*;
 public class DiretorioArquivosVendasListener {
 
     private static ILeituraArquivoService leituraArquivoService = new LeituraArquivoService();
+    private static IGerarRelatorioService gerarRelatorioService = new GerarRelatorioService();
 
     public static void monitoraDiretorioArquivoVendas() throws IOException {
 
         Path filePath = Paths.get("C:\\temp\\data\\in\\");
         WatchService watchService = FileSystems.getDefault().newWatchService();
         filePath.register(watchService, StandardWatchEventKinds.ENTRY_CREATE);
-        System.out.println("Watcher Registrado");
         processaEventos(watchService);
     }
 
@@ -23,23 +26,19 @@ public class DiretorioArquivosVendasListener {
         WatchKey watchKey;
         while (true) {
             try {
-                System.out.println("Take");
                 watchKey = watchService.take();
             } catch (InterruptedException ex) {
                 return;
             }
-            System.out.println("Pool");
             watchKey
                     .pollEvents()
                     .forEach(event -> {
                         Path path = (Path) event.context();
-                        System.out.println("PROCESSA");
-                        leituraArquivoService.processaArquivo(path.getFileName());
-
+                        gerarRelatorioService.geraRelatorioArquivoVenda(
+                                leituraArquivoService.processaArquivo(path.getFileName()));
                     });
 
             watchKey.reset();
         }
-
     }
 }

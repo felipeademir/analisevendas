@@ -34,7 +34,6 @@ public class LeituraArquivoService implements ILeituraArquivoService {
 
     public ArquivoVendas processaArquivo(Path fileName){
         try {
-            System.out.println("Valido");
             if(!arquivoValido(fileName)){
                 return null;
             }
@@ -64,7 +63,7 @@ public class LeituraArquivoService implements ILeituraArquivoService {
         identificaVendedoresNoArquivo(stream).forEach(vendedor ->
         {
             String[] dadosVendedor = vendedor.split(SEPARADOR_ARQUIVO);
-            listaVendedores.add(new Vendedor(dadosVendedor[1], dadosVendedor[2], new BigDecimal(dadosVendedor[3])));
+            listaVendedores.add(new Vendedor(dadosVendedor[1], dadosVendedor[2], new BigDecimal(dadosVendedor[3]), 0));
         });
         arquivoVendas.setVendedores(listaVendedores);
     }
@@ -102,6 +101,8 @@ public class LeituraArquivoService implements ILeituraArquivoService {
             listaVendas.add(new Venda(Long.valueOf(dadosVenda[1])
                     , processaItensVenda(dadosVenda[2])
                     , buscaVendedor(dadosVenda[3])));
+
+            buscaVendedor(dadosVenda[3]).setTotalVendido(listaVendas.get(listaVendas.size()-1).getPrecoTotalVenda());
         });
         arquivoVendas.setVendas(listaVendas);
     }

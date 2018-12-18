@@ -15,4 +15,8 @@ public class ItemVenda {
     private int quantidade;
     private BigDecimal precoItem;
 
+    public BigDecimal getPrecoTotalItem(){
+        return precoItem.multiply(new BigDecimal(quantidade));
+    }
+
 }
