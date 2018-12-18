@@ -1,7 +1,6 @@
 package br.com.agibank.analisevendas.service;
 
 import br.com.agibank.analisevendas.model.*;
-import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,7 +15,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-@Service
 public class LeituraArquivoService implements ILeituraArquivoService {
 
     private ArquivoVendas arquivoVendas;
