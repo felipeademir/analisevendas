@@ -5,11 +5,14 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -29,17 +32,30 @@ public class LeituraArquivoService implements ILeituraArquivoService {
         this.arquivoVendas = new ArquivoVendas();
     }
 
-    public ArquivoVendas processaArquivo(String fileName){
-        try (Stream<String> stream = Files.lines(Paths.get(fileName))) {
-            arquivoVendas.setNomeArquivo(fileName);
-            processaVendedores(stream);
-            processaClientes(stream);
-            processaVendas(stream);
+    public ArquivoVendas processaArquivo(Path fileName){
+        try {
+            System.out.println("Valido");
+            if(!arquivoValido(fileName)){
+                return null;
+            }
+            arquivoVendas.setNomeArquivo(fileName.toString());
+            processaVendedores(montaStream(fileName));
+            processaClientes(montaStream(fileName));
+            processaVendas(montaStream(fileName));
         } catch (IOException e) {
             e.printStackTrace();
         }
 
         return arquivoVendas;
+    }
+
+    private boolean arquivoValido(Path fileName){
+        return fileName.toString().endsWith(".dat");
+    }
+
+    private Stream<String> montaStream(Path fileName) throws IOException{
+        return Files.lines(
+                Paths.get("C:\\temp\\data\\in\\"+fileName.toString()), Charset.forName("Cp1252"));
     }
 
     private void processaVendedores(Stream<String> stream){
@@ -99,7 +115,7 @@ public class LeituraArquivoService implements ILeituraArquivoService {
     private List<ItemVenda> processaItensVenda(String stream){
         List<ItemVenda> itensVenda = new ArrayList<>();
             Arrays.asList(stream
-                    .replaceAll("\\[]", "")
+                    .replaceAll("[\\[\\]\"]", "")
                     .split(SEPARADOR_ITENS_VENDA))
                     .forEach(item->{
                         itensVenda.add(processaItemVenda(item));
