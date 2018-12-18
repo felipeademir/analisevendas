@@ -6,6 +6,7 @@ import br.com.agibank.analisevendas.service.IGerarRelatorioService;
 import br.com.agibank.analisevendas.service.ILeituraArquivoService;
 import br.com.agibank.analisevendas.service.LeituraArquivoService;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
 
@@ -15,8 +16,7 @@ public class DiretorioArquivosVendasListener {
     private static IGerarRelatorioService gerarRelatorioService = new GerarRelatorioService();
 
     public static void monitoraDiretorioArquivoVendas() throws IOException {
-
-        Path filePath = Paths.get("C:\\temp\\data\\in\\");
+        Path filePath = Paths.get(leituraArquivoService.getDiretorioWatcher());
         WatchService watchService = FileSystems.getDefault().newWatchService();
         filePath.register(watchService, StandardWatchEventKinds.ENTRY_CREATE);
         processaEventos(watchService);

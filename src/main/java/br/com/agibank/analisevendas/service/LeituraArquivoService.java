@@ -3,6 +3,7 @@ package br.com.agibank.analisevendas.service;
 import br.com.agibank.analisevendas.model.*;
 import org.springframework.stereotype.Service;
 
+import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.charset.Charset;
@@ -12,7 +13,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -28,36 +28,42 @@ public class LeituraArquivoService implements ILeituraArquivoService {
     public static final String SEPARADOR_ITENS_VENDA = ",";
     public static final String SEPARADOR_DETALHE_ITEM = "-";
 
-    public LeituraArquivoService(){
+    public LeituraArquivoService() {
         this.arquivoVendas = new ArquivoVendas();
     }
 
-    public ArquivoVendas processaArquivo(Path fileName){
-        try {
-            if(!arquivoValido(fileName)){
-                return null;
-            }
-            arquivoVendas.setNomeArquivo(fileName.toString());
-            processaVendedores(montaStream(fileName));
-            processaClientes(montaStream(fileName));
-            processaVendas(montaStream(fileName));
-        } catch (IOException e) {
-            e.printStackTrace();
+    public ArquivoVendas processaArquivo(Path fileName) {
+        if (!arquivoValido(fileName)) {
+            return null;
         }
+        arquivoVendas.setNomeArquivo(fileName.toString());
+        processaVendedores(montaStream(fileName));
+        processaClientes(montaStream(fileName));
+        processaVendas(montaStream(fileName));
 
         return arquivoVendas;
     }
 
-    private boolean arquivoValido(Path fileName){
+    public String getDiretorioWatcher() throws IOException {
+        return new File(".").getCanonicalPath().concat("\\data\\in\\");
+    }
+
+    private boolean arquivoValido(Path fileName) {
         return fileName.toString().endsWith(".dat");
     }
 
-    private Stream<String> montaStream(Path fileName) throws IOException{
-        return Files.lines(
-                Paths.get("C:\\temp\\data\\in\\"+fileName.toString()), Charset.forName("Cp1252"));
+    private Stream<String> montaStream(Path fileName) {
+        try {
+            return Files.lines(
+                    Paths.get(getDiretorioWatcher() + fileName.toString()), Charset.forName("Cp1252"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return null;
     }
 
-    private void processaVendedores(Stream<String> stream){
+    private void processaVendedores(Stream<String> stream) {
 
         List<Vendedor> listaVendedores = new ArrayList<>();
         identificaVendedoresNoArquivo(stream).forEach(vendedor ->
@@ -68,13 +74,13 @@ public class LeituraArquivoService implements ILeituraArquivoService {
         arquivoVendas.setVendedores(listaVendedores);
     }
 
-    private List<String> identificaVendedoresNoArquivo(Stream<String> stream){
+    private List<String> identificaVendedoresNoArquivo(Stream<String> stream) {
         return stream
-                .filter(line-> line.startsWith(LINHA_VENDEDORES))
+                .filter(line -> line.startsWith(LINHA_VENDEDORES))
                 .collect(Collectors.toList());
     }
 
-    private void processaClientes(Stream<String> stream){
+    private void processaClientes(Stream<String> stream) {
 
         List<Cliente> listaClientes = new ArrayList<>();
         identificaClientesNoArquivo(stream).forEach(cliente ->
@@ -85,16 +91,15 @@ public class LeituraArquivoService implements ILeituraArquivoService {
         arquivoVendas.setClientes(listaClientes);
     }
 
-    private List<String> identificaClientesNoArquivo(Stream<String> stream){
+    private List<String> identificaClientesNoArquivo(Stream<String> stream) {
         return stream
-                .filter(line-> line.startsWith(LINHA_CLIENTES))
+                .filter(line -> line.startsWith(LINHA_CLIENTES))
                 .collect(Collectors.toList());
     }
 
-    private void processaVendas(Stream<String> stream){
+    private void processaVendas(Stream<String> stream) {
 
         List<Venda> listaVendas = new ArrayList<>();
-        List<ItemVenda> itensVenda = new ArrayList<>();
         identificaVendasNoArquivo(stream).forEach(venda ->
         {
             String[] dadosVenda = venda.split(SEPARADOR_ARQUIVO);
@@ -102,40 +107,40 @@ public class LeituraArquivoService implements ILeituraArquivoService {
                     , processaItensVenda(dadosVenda[2])
                     , buscaVendedor(dadosVenda[3])));
 
-            buscaVendedor(dadosVenda[3]).setTotalVendido(listaVendas.get(listaVendas.size()-1).getPrecoTotalVenda());
+            buscaVendedor(dadosVenda[3]).setTotalVendido(listaVendas.get(listaVendas.size() - 1).getPrecoTotalVenda());
         });
         arquivoVendas.setVendas(listaVendas);
     }
 
-    private List<String> identificaVendasNoArquivo(Stream<String> stream){
+    private List<String> identificaVendasNoArquivo(Stream<String> stream) {
         return stream
-                .filter(line-> line.startsWith(LINHA_VENDAS))
+                .filter(line -> line.startsWith(LINHA_VENDAS))
                 .collect(Collectors.toList());
     }
 
-    private List<ItemVenda> processaItensVenda(String stream){
+    private List<ItemVenda> processaItensVenda(String stream) {
         List<ItemVenda> itensVenda = new ArrayList<>();
-            Arrays.asList(stream
-                    .replaceAll("[\\[\\]\"]", "")
-                    .split(SEPARADOR_ITENS_VENDA))
-                    .forEach(item->{
-                        itensVenda.add(processaItemVenda(item));
-                    });
+        Arrays.asList(stream
+                .replaceAll("[\\[\\]\"]", "")
+                .split(SEPARADOR_ITENS_VENDA))
+                .forEach(item -> {
+                    itensVenda.add(processaItemVenda(item));
+                });
         return itensVenda;
     }
 
-    private ItemVenda processaItemVenda(String item){
+    private ItemVenda processaItemVenda(String item) {
         String[] detalheItem = item.split(SEPARADOR_DETALHE_ITEM);
         return new ItemVenda(Long.valueOf(detalheItem[0])
                 , Integer.parseInt(detalheItem[1])
                 , new BigDecimal(detalheItem[2]));
     }
 
-    private Vendedor buscaVendedor(String nome){
+    private Vendedor buscaVendedor(String nome) {
         return arquivoVendas
                 .getVendedores()
                 .stream()
-                .filter(x-> x.getNome().equals(nome))
+                .filter(x -> x.getNome().equals(nome))
                 .findFirst()
                 .get();
     }
