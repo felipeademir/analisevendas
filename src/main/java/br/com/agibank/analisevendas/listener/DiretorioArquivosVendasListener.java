@@ -1,12 +1,10 @@
 package br.com.agibank.analisevendas.listener;
 
-import br.com.agibank.analisevendas.model.ArquivoVendas;
 import br.com.agibank.analisevendas.service.GerarRelatorioService;
 import br.com.agibank.analisevendas.service.IGerarRelatorioService;
 import br.com.agibank.analisevendas.service.ILeituraArquivoService;
 import br.com.agibank.analisevendas.service.LeituraArquivoService;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
 
